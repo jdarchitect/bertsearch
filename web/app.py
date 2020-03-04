@@ -1,18 +1,21 @@
 import os
 from pprint import pprint
-
 from flask import Flask, render_template, jsonify, request
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 import codecs, json
 import numpy as np
-#from bert_serving.client import BertClient
+import gluonnlp as nlp 
+import mxnet as mx
+
 SEARCH_SIZE = 10
 INDEX_NAME = os.environ['INDEX_NAME']
-model  = "roberta-base-nli-stsb-mean-tokens"
-embedder = SentenceTransformer(model)
-app = Flask(__name__)
+#model  = "roberta-base-nli-stsb-mean-tokens"
+#embedder = SentenceTransformer(model)
+model, vocab = nlp.model.get_model('roberta_12_768_12', dataset_name='openwebtext_ccnews_stories_books_cased', use_decoder=False);
+tokenizer = nlp.data.GPT2BPETokenizer();
 
+app = Flask(__name__)
 
 
 @app.route('/')
@@ -21,19 +24,19 @@ def index():
 
 @app.route('/search')
 def analyzer():
-#    bc = BertClient(ip='bertserving', output_fmt='list', port=1044, port_out=1045)
     client = Elasticsearch('elasticsearch:9200')
-
+    
     query = request.args.get('q')
-    query_vector= embedder.encode([query])[0]
-#    query_vector = bc.encode([query])[0]
+    embedding = model(mx.nd.array([vocab[[vocab.bos_token] + tokenizer(query) + [vocab.eos_token]]]))
+    query_vector =  embedding[:,0,:].flatten()
+#    query_vector= embedder.encode([query])[0]
 
     script_query = {
         "script_score": {
             "query": {"match_all": {}},
             "script": {
                 "source": "cosineSimilarity(params.query_vector, doc['text_vector'])+1.0",
-                "params": {"query_vector": query_vector.tolist()}
+                "params": {"query_vector": query_vector.asnumpy().tolist()}
             }
         }
     }

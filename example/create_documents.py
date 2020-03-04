@@ -4,14 +4,20 @@ Example script to create elasticsearch documents.
 import argparse
 import codecs, json
 import numpy as np
+import gluonnlp as nlp
+import mxnet as mx
+
 
 import pandas as pd
-#from bert_serving.client import BertClient
-#bc = BertClient(output_fmt='list', port=1044, port_out=1045)
-from sentence_transformers import SentenceTransformer
 
-model  = "roberta-base-nli-stsb-mean-tokens"
-embedder = SentenceTransformer(model)
+#from sentence_transformers import SentenceTransformer
+
+model, vocab = nlp.model.get_model('roberta_12_768_12', dataset_name='openwebtext_ccnews_stories_books_cased', use_decoder=False);
+tokenizer = nlp.data.GPT2BPETokenizer();
+
+
+#model  = "roberta-base-nli-stsb-mean-tokens"
+#embedder = SentenceTransformer(model)
 
 def create_document(doc, emb, index_name):
     return {
@@ -40,17 +46,18 @@ def bulk_predict(docs, batch_size=256):
     """Predict bert embeddings."""
     for i in range(0, len(docs), batch_size):
         batch_docs = docs[i: i+batch_size]
-        embeddings= embedder.encode([doc['text'] for doc in batch_docs])
-#        embeddings = bc.encode([doc['text'] for doc in batch_docs])
-        for emb in embeddings:
-            yield emb
+        for d in batch_docs:
+#        embeddings= embedder.encode([doc['text'] for doc in batch_docs])
+           embeddings_bert = model(mx.nd.array([vocab[[vocab.bos_token] + tokenizer(d['text']) + [vocab.eos_token]]]))
+           embeddings =  embeddings_bert[:,0,:].flatten()
+           for emb in embeddings:
+               yield emb.asnumpy().tolist()
             
 def main(args):
     docs = load_dataset(args.data)
     with open(args.save, 'w') as f:
         for doc, emb in zip(docs, bulk_predict(docs)):
-            emb_list=emb.tolist()
-            d = create_document(doc, emb_list, args.index_name)
+            d = create_document(doc, emb, args.index_name)
             f.write(json.dumps(d) + '\n')
 
 
