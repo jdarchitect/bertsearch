@@ -12,7 +12,9 @@ SEARCH_SIZE = 10
 INDEX_NAME = os.environ['INDEX_NAME']
 #model  = "roberta-base-nli-stsb-mean-tokens"
 #embedder = SentenceTransformer(model)
-model, vocab = nlp.model.get_model('roberta_12_768_12', dataset_name='openwebtext_ccnews_stories_books_cased', use_decoder=False);
+model, vocab = nlp.model.get_model('roberta_12_768_12', dataset_name='openwebtext_book_corpus_wiki_en_uncased', use_decoder=False);
+#model, vocab = nlp.model.get_model('roberta_12_768_12', dataset_name='openwebtext_ccnews_stories_books_cased', use_decoder=False);
+
 tokenizer = nlp.data.GPT2BPETokenizer();
 
 app = Flask(__name__)

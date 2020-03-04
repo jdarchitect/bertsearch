@@ -12,8 +12,10 @@ import pandas as pd
 
 #from sentence_transformers import SentenceTransformer
 
-model, vocab = nlp.model.get_model('roberta_12_768_12', dataset_name='openwebtext_ccnews_stories_books_cased', use_decoder=False);
-tokenizer = nlp.data.GPT2BPETokenizer();
+#model, vocab = nlp.model.get_model('roberta_12_768_12', dataset_name='openwebtext_ccnews_stories_books_cased', use_decoder=False);
+model, vocab = nlp.model.get_model('bert_12_768_12', dataset_name='book_corpus_wiki_en_uncased', use_classifier=False, use_decoder=False);
+tokenizer = nlp.data.BERTTokenizer(vocab, lower=True);
+#tokenizer = nlp.data.GPT2BPETokenizer();
 
 
 #model  = "roberta-base-nli-stsb-mean-tokens"
