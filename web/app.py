@@ -27,8 +27,8 @@ def analyzer():
     client = Elasticsearch('elasticsearch:9200')
     
     query = request.args.get('q')
-    embedding = model(mx.nd.array([vocab[[vocab.bos_token] + tokenizer(query) + [vocab.eos_token]]]))
-    query_vector =  embedding[:,0,:].flatten()
+    embeddings = model(mx.nd.array([vocab[[vocab.bos_token] + tokenizer(query) + [vocab.eos_token]]]))
+    query_vector =  embeddings[:,0,:].flatten()[0]
 #    query_vector= embedder.encode([query])[0]
 
     script_query = {

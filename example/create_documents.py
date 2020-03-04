@@ -50,8 +50,7 @@ def bulk_predict(docs, batch_size=256):
 #        embeddings= embedder.encode([doc['text'] for doc in batch_docs])
            embeddings_bert = model(mx.nd.array([vocab[[vocab.bos_token] + tokenizer(d['text']) + [vocab.eos_token]]]))
            embeddings =  embeddings_bert[:,0,:].flatten()
-           for emb in embeddings:
-               yield emb.asnumpy().tolist()
+           yield embeddings[0].asnumpy().tolist()
             
 def main(args):
     docs = load_dataset(args.data)
