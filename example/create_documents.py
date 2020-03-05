@@ -10,23 +10,26 @@ import mxnet as mx
 
 import pandas as pd
 
-#from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer
 
-#model, vocab = nlp.model.get_model('roberta_12_768_12', dataset_name='openwebtext_ccnews_stories_books_cased', use_decoder=False);
-model, vocab = nlp.model.get_model('bert_12_768_12', dataset_name='book_corpus_wiki_en_uncased', use_classifier=False, use_decoder=False);
-tokenizer = nlp.data.BERTTokenizer(vocab, lower=True);
+##model, vocab = nlp.model.get_model('roberta_12_768_12', dataset_name='openwebtext_ccnews_stories_books_cased', use_decoder=False);
+
 #tokenizer = nlp.data.GPT2BPETokenizer();
 
 
-#model  = "roberta-base-nli-stsb-mean-tokens"
-#embedder = SentenceTransformer(model)
+model  = "roberta-base-nli-stsb-mean-tokens"
+embedder = SentenceTransformer(model)
 
 def create_document(doc, emb, index_name):
     return {
         '_op_type': 'index',
         '_index': index_name,
-        'text': doc['text'],
+        'asin': doc['asin'],
+        'type': doc['image'],
+        'type': doc['url'],
+        'type': doc['type'],
         'title': doc['title'],
+        'text': doc['text'],
         'text_vector': emb
     }
 
@@ -37,8 +40,12 @@ def load_dataset(path):
     for row in df.iterrows():
         series = row[1]
         doc = {
+            'asin': series.Asin,
+            'image': series.Img_URL,
+            'url': series.Web_URL,
+            'type': series.Type,
             'title': series.Title,
-            'text': series.Description
+            'text': series.Text
         }
         docs.append(doc)
     return docs
@@ -48,11 +55,13 @@ def bulk_predict(docs, batch_size=256):
     """Predict bert embeddings."""
     for i in range(0, len(docs), batch_size):
         batch_docs = docs[i: i+batch_size]
-        for d in batch_docs:
-#        embeddings= embedder.encode([doc['text'] for doc in batch_docs])
-           embeddings_bert = model(mx.nd.array([vocab[[vocab.bos_token] + tokenizer(d['text']) + [vocab.eos_token]]]))
-           embeddings =  embeddings_bert[:,0,:].flatten()
-           yield embeddings[0].asnumpy().tolist()
+#        for d in batch_docs:
+        embeddings= embedder.encode([doc['text'] for doc in batch_docs])
+#           embeddings_bert = model(mx.nd.array([vocab[[vocab.bos_token] + tokenizer(d['text']) + [vocab.eos_token]]]))
+#           embeddings =  embeddings_bert[:,0,:].flatten()
+        for emb in embeddings:
+           yield emb.tolist()
+#.          yield embeddings[0].asnumpy().tolist()
             
 def main(args):
     docs = load_dataset(args.data)

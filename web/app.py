@@ -10,12 +10,12 @@ import mxnet as mx
 
 SEARCH_SIZE = 10
 INDEX_NAME = os.environ['INDEX_NAME']
-#model  = "roberta-base-nli-stsb-mean-tokens"
-#embedder = SentenceTransformer(model)
-model, vocab = nlp.model.get_model('roberta_12_768_12', dataset_name='openwebtext_book_corpus_wiki_en_uncased', use_decoder=False);
+model  = "roberta-base-nli-stsb-mean-tokens"
+embedder = SentenceTransformer(model)
+
 #model, vocab = nlp.model.get_model('roberta_12_768_12', dataset_name='openwebtext_ccnews_stories_books_cased', use_decoder=False);
 
-tokenizer = nlp.data.GPT2BPETokenizer();
+#tokenizer = nlp.data.GPT2BPETokenizer();
 
 app = Flask(__name__)
 
@@ -29,27 +29,51 @@ def analyzer():
     client = Elasticsearch('elasticsearch:9200')
     
     query = request.args.get('q')
-    embeddings = model(mx.nd.array([vocab[[vocab.bos_token] + tokenizer(query) + [vocab.eos_token]]]))
-    query_vector =  embeddings[:,0,:].flatten()[0]
-#    query_vector= embedder.encode([query])[0]
-
-    script_query = {
-        "script_score": {
-            "query": {"match_all": {}},
-            "script": {
-                "source": "cosineSimilarity(params.query_vector, doc['text_vector'])+1.0",
-                "params": {"query_vector": query_vector.asnumpy().tolist()}
-            }
-        }
-    }
+ #   embeddings = model(mx.nd.array([vocab[[vocab.bos_token] + tokenizer(query) + [vocab.eos_token]]]))
+ #   query_vector =  embeddings[:,0,:].flatten()[0]
+    query_vector= embedder.encode([query])[0]
 
     response = client.search(
         index=INDEX_NAME,
         body={
-            "size": SEARCH_SIZE,
-            "query": script_query,
-            "_source": {"includes": ["title", "text"]}
-        }
+                "size": SEARCH_SIZE,
+                "query": {
+                  "script_score": {
+                    "query": {
+                      "match_all": {}
+                    },
+                    "script": {
+                      "source": "cosineSimilarity(params.query_vector, doc['text_vector'])+1.0",
+                      "params": {
+                        "query_vector": query_vector.tolist()
+                      }
+                    }
+                  },
+                  "aggs": {
+                    "dedup": {
+                      "terms": {
+                        "field": "asin",
+                        "size": 0
+                      },
+                      "aggs": {
+                        "dedup_docs": {
+                          "top_hits": {
+                            "_source": "_id",
+                            "size": 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "_source": {
+                  "includes": [
+                    "title",
+                    "text"
+                  ]
+                }
+              }
+
     )
     print(query)
     pprint(response)

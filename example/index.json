@@ -9,6 +9,18 @@
       "enabled": "true"
     },
     "properties": {
+      "asin": {
+        "type": "text"
+      },
+      "image": {
+        "type": "text"
+      },
+      "url": {
+        "type": "text"
+      },
+      "type": {
+        "type": "text"
+      },
       "title": {
         "type": "text"
       },
