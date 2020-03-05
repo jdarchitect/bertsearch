@@ -1,5 +1,3 @@
 sentence_transformers
-mxnet
-gluonnlp
 elasticsearch
 Flask

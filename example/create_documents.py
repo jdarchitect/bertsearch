@@ -4,8 +4,8 @@ Example script to create elasticsearch documents.
 import argparse
 import codecs, json
 import numpy as np
-import gluonnlp as nlp
-import mxnet as mx
+#import gluonnlp as nlp
+#import mxnet as mx
 
 
 import pandas as pd
