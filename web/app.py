@@ -5,8 +5,8 @@ from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 import codecs, json
 import numpy as np
-import gluonnlp as nlp 
-import mxnet as mx
+#import gluonnlp as nlp 
+#import mxnet as mx
 
 SEARCH_SIZE = 10
 INDEX_NAME = os.environ['INDEX_NAME']
